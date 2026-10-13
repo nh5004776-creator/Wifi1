@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MikroTik MAC Binding Manager - 30 Devices</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin: 0;
+        }
+
+        .title {
+            text-align: center;
+            color: #007bff;
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .item-card {
+            background: #fff;
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
+        }
+
+        .item-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            border: 2px solid #007bff;
+            border-radius: 30px;
+            padding: 4px 6px 4px 15px;
+            background-color: #fff;
+        }
+
+        .mac-input {
+            border: none;
+            outline: none;
+            font-size: 13px;
+            color: #333;
+            width: 65%;
+            background: transparent;
+            /* এখানে রিড-অনলি বক্সের টেক্সট হালকা দেখাবে যাতে সুরক্ষিত বোঝায় */
+        }
+
+        .mac-input:read-only {
+            background-color: #f1f3f5;
+            color: #495057;
+            border-radius: 20px;
+            padding-left: 5px;
+            cursor: not-allowed;
+        }
+
+        .copy-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-left: 5px;
+        }
+
+        .copy-btn.copied {
+            background-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="title">Your Hotspot's Status</div>
+
+    <div class="container" id="bindingList">
+        <!-- ডায়নামিক রো এখানে তৈরি হবে -->
+    </div>
+
+    <script>
+        // ৩০টি ভিন্ন ডিভাইস ও আলাদা ম্যাক অ্যাড্রেসের তালিকা
+        const devices = [
+            { name: "01 বকুল টিভি", mac: "D0:A0:BB:3F:BD:E2" },
+            { name: "02 বকুল মোবাইল", mac: "FC:38:82:EC:D0:24" },
+            { name: "03 নাজিরা মোবাইল", mac: "1C:AB:48:8A:30:11" },
+            { name: "04 নাজিরা মোবাইল", mac: "30:AF:CE:49:DB:71" },
+            { name: "05 সুমি মোবাইল", mac: "B8:B1:EA:36:04:22" },
+            { name: "06 সুমি টিভি", mac: "ম্যাক এড্রেস নাই" },
+            { name: "07 ভজে টিভি", mac: "9C:00:D3:26:CF:A7" },
+            { name: "08 সদ্দি মোবাইল", mac: "0C:C6:FD:E7:E3:9E" },
+            { name: "09 কামাল পিসি", mac: "11:22:33:44:55:66" },
+            { name: "10 মিনা টিভি", mac: "22:33:44:55:66:77" },
+            { name: "11 রিয়াজ মোবাইল", mac: "33:44:55:66:77:88" },
+            { name: "12 সাকিল ল্যাপটপ", mac: "44:55:66:77:88:99" },
+            { name: "13 জুয়েল রাউটার", mac: "55:66:77:88:99:AA" },
+            { name: "14 লিমন টিভি", mac: "66:77:88:99:AA:BB" },
+            { name: "15 আরিফ মোবাইল", mac: "77:88:99:AA:BB:CC" },
+            { name: "16 নাইম ট্যাব", mac: "88:99:AA:BB:CC:DD" },
+            { name: "17 ইব্রাহিম টিভি", mac: "99:AA:BB:CC:DD:EE" },
+            { name: "18 সায়েম মোবাইল", mac: "AA:BB:CC:DD:EE:FF" },
+            { name: "19 ফাহিম পিসি", mac: "AB:CD:EF:12:34:56" },
+            { name: "20 রাহাত টিভি", mac: "BC:DE:FA:23:45:67" },
+            { name: "21 তানভীর মোবাইল", mac: "CD:EF:AB:34:56:78" },
+            { name: "22 শিমুল ল্যাপটপ", mac: "DE:FA:BC:45:67:89" },
+            { name: "23 মিলন টিভি", mac: "EF:AB:CD:56:78:9A" },
+            { name: "24 সাগর মোবাইল", mac: "12:34:56:78:9A:BC" },
+            { name: "25 সুজন ট্যাব", mac: "23:45:67:89:AB:CD" },
+            { name: "26 রাজু টিভি", mac: "34:56:78:9A:BC:DE" },
+            { name: "27 ডালিম মোবাইল", mac: "45:67:89:AB:CD:EF" },
+            { name: "28 বাবু পিসি", mac: "56:78:9A:BC:DE:F1" },
+            { name: "29 কবীর টিভি", mac: "67:89:AB:CD:EF:12" },
+            { name: "30 আলমগীর মোবাইল", mac: "78:9A:BC:DE:F1:23" }
+        ];
+
+        function loadInterface() {
+            const container = document.getElementById("bindingList");
+            container.innerHTML = "";
+
+            devices.forEach((device, index) => {
+                const card = document.createElement("div");
+                card.className = "item-card";
+
+                card.innerHTML = `
+                    <div class="item-title">${device.name}:</div>
+                    <div class="input-row">
+                        <!-- এখানে readonly যোগ করা হয়েছে যাতে কেউ হুট করে এডিট করতে না পারে -->
+                        <input type="text" class="mac-input" id="mac_${index}" value="${device.mac}" readonly>
+                        <button class="copy-btn" onclick="copyCommand(${index})">কপি করুন</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function copyCommand(index) {
+            const macInput = document.getElementById(`mac_${index}`).value.trim();
+            const btn = event.target;
+
+            if (!macInput || macInput === "ম্যাক এড্রেস নাই") {
+                alert("দয়া করে সঠিক ম্যাক অ্যাড্রেস দিন!");
+                return;
+            }
+
+            const command = `/ip hotspot ip-binding add mac-address=${macInput} type=bypassed comment="30"`;
+
+            navigator.clipboard.writeText(command).then(() => {
+                btn.innerText = "কপি হয়েছে!";
+                btn.classList.add("copied");
+
+                setTimeout(() => {
+                    btn.innerText = "কপি করুন";
+                    btn.classList.remove("copied");
+                }, 1500);
+            });
+        }
+
+        // পেজ লোড হলে রান হবে
+        loadInterface();
+    </script>
+
+</body>
+</html>
